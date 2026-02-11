@@ -4,6 +4,10 @@
 (() => {
   "use strict";
 
+  // Prevent double-injection when scripting.executeScript re-runs the file
+  if (window.__save2md_injected) return;
+  window.__save2md_injected = true;
+
   // ---------------------------------------------------------------------------
   // Ad / junk selectors – elements matching these are removed before conversion
   // ---------------------------------------------------------------------------
@@ -25,13 +29,9 @@
     "[class*='cookie-banner']", "[class*='cookie-consent']", "[id*='cookie']",
     "[class*='gdpr']", "[id*='gdpr']",
     // Newsletter / signup popups
-    "[class*='newsletter']", "[class*='subscribe-modal']", "[class*='signup-prompt']",
-    // Generic junk
-    "[class*='popup']", "[class*='modal']", "[class*='overlay']",
-    "[role='banner']", "[role='complementary']",
+    "[class*='newsletter-popup']", "[class*='subscribe-modal']", "[class*='signup-prompt']",
+    // Aria-labelled ads
     "[aria-label='advertisement']", "[aria-label='Advertisement']",
-    // Common tag-based junk
-    "aside", "nav", "footer", "header",
     // iframes that are typically ads
     "iframe[src*='doubleclick']", "iframe[src*='googlesyndication']",
     "iframe[src*='facebook.com/plugins']", "iframe[src*='platform.twitter']",
@@ -45,15 +45,14 @@
     ".post-content", ".entry-content", ".article-content", ".article-body",
     ".post-body", ".story-body", ".content-body",
     "#content", "#main-content", "#article-body",
-    ".markdown-body", // GitHub
-    ".mw-parser-output", // Wikipedia
+    ".markdown-body",
+    ".mw-parser-output",
   ];
 
   // -------------------------------------------------------------------------
   // Readability-lite: find the most content-rich element
   // -------------------------------------------------------------------------
   function findMainContent(doc) {
-    // Try known selectors first
     for (const sel of CONTENT_SELECTORS) {
       const el = doc.querySelector(sel);
       if (el && el.textContent.trim().length > 200) {
@@ -61,33 +60,25 @@
       }
     }
 
-    // Fallback: score top-level containers by text density
-    const candidates = doc.querySelectorAll(
-      "div, section, article, main, td"
-    );
+    const candidates = doc.querySelectorAll("div, section, article, main, td");
     let best = null;
     let bestScore = 0;
 
     for (const el of candidates) {
-      // Skip tiny or deeply nested elements
       if (el.textContent.trim().length < 100) continue;
 
       let score = 0;
-      // Paragraphs are a strong signal
       score += el.querySelectorAll("p").length * 3;
-      // Headings matter
       score += el.querySelectorAll("h1,h2,h3,h4,h5,h6").length * 2;
-      // Images inside are valuable
       score += el.querySelectorAll("img").length;
-      // Penalise elements that look like navigation / sidebars
+
       const cls = (el.className + " " + el.id).toLowerCase();
-      if (/sidebar|menu|nav|footer|header|comment|widget/.test(cls)) {
+      if (/sidebar|menu|comment|widget/.test(cls)) {
         score -= 20;
       }
       if (/article|post|entry|content|story|body|main/.test(cls)) {
         score += 10;
       }
-      // Text length bonus (diminishing)
       score += Math.log(el.textContent.trim().length);
 
       if (score > bestScore) {
@@ -106,7 +97,6 @@
     for (const sel of AD_SELECTORS) {
       try {
         root.querySelectorAll(sel).forEach((el) => {
-          // Don't remove if it's the main content container itself
           if (el === root) return;
           el.remove();
         });
@@ -123,10 +113,17 @@
       }
     });
 
-    // Remove script / style / noscript
+    // Remove non-content tags
     root.querySelectorAll("script, style, noscript, link, meta, svg").forEach((el) =>
       el.remove()
     );
+
+    // Remove nav elements (but not inside main content areas)
+    root.querySelectorAll("nav").forEach((el) => {
+      if (!el.closest("article, main, [role='main']")) {
+        el.remove();
+      }
+    });
 
     return root;
   }
@@ -136,24 +133,25 @@
   // -------------------------------------------------------------------------
   function htmlToMarkdown(element, opts = {}) {
     const includeImages = opts.includeImages !== false;
-    const images = []; // collected { src, alt } entries
+    const images = [];
 
     function escapeMarkdown(text) {
-      // Light escaping – avoid breaking formatting characters in body text
-      return text.replace(/([\\`*_{}[\]()#+\-.!|])/g, "\\$1");
+      return text
+        .replace(/\\/g, "\\\\")
+        .replace(/([*_`\[\]()#+\-.!|{}])/g, "\\$1");
     }
 
     function processNode(node) {
       if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent.replace(/\s+/g, " ");
-        return text;
+        // Escape markdown special chars in plain text
+        return escapeMarkdown(text);
       }
 
       if (node.nodeType !== Node.ELEMENT_NODE) return "";
 
       const tag = node.tagName.toLowerCase();
 
-      // Skip certain tags entirely
       if (["script", "style", "noscript", "button", "input", "form", "select", "textarea"].includes(tag)) {
         return "";
       }
@@ -161,7 +159,6 @@
       const children = Array.from(node.childNodes).map(processNode).join("");
 
       switch (tag) {
-        // Headings
         case "h1": return `\n\n# ${children.trim()}\n\n`;
         case "h2": return `\n\n## ${children.trim()}\n\n`;
         case "h3": return `\n\n### ${children.trim()}\n\n`;
@@ -169,12 +166,10 @@
         case "h5": return `\n\n##### ${children.trim()}\n\n`;
         case "h6": return `\n\n###### ${children.trim()}\n\n`;
 
-        // Paragraphs & line breaks
         case "p": return `\n\n${children.trim()}\n\n`;
         case "br": return "\n";
         case "hr": return "\n\n---\n\n";
 
-        // Inline formatting
         case "strong":
         case "b": {
           const t = children.trim();
@@ -192,21 +187,20 @@
           return t ? `~~${t}~~` : "";
         }
         case "code": {
-          const t = children.trim();
-          return t ? `\`${t}\`` : "";
+          // Don't escape inside inline code
+          const raw = node.textContent.trim();
+          return raw ? `\`${raw}\`` : "";
         }
         case "mark": {
           const t = children.trim();
           return t ? `==${t}==` : "";
         }
 
-        // Links
         case "a": {
           const href = node.getAttribute("href");
           const text = children.trim();
           if (!text) return "";
           if (!href || href.startsWith("javascript:") || href === "#") return text;
-          // Make relative URLs absolute
           let fullHref = href;
           try {
             fullHref = new URL(href, document.baseURI).href;
@@ -216,7 +210,6 @@
           return `[${text}](${fullHref})`;
         }
 
-        // Images
         case "img": {
           if (!includeImages) return "";
           let src = node.getAttribute("src") ||
@@ -233,11 +226,9 @@
           return `![${alt}](${src})`;
         }
 
-        // figure / figcaption
         case "figure": return `\n\n${children.trim()}\n\n`;
         case "figcaption": return `\n*${children.trim()}*\n`;
 
-        // Lists
         case "ul":
         case "ol": {
           const items = [];
@@ -247,7 +238,6 @@
               const bullet = tag === "ol" ? `${idx}. ` : "- ";
               const content = processNode(child).trim();
               if (content) {
-                // Indent nested content
                 const indented = content.replace(/\n/g, "\n  ");
                 items.push(`${bullet}${indented}`);
                 idx++;
@@ -258,17 +248,15 @@
         }
         case "li": return children;
 
-        // Blockquotes
         case "blockquote": {
           const lines = children.trim().split("\n");
           return `\n\n${lines.map((l) => `> ${l}`).join("\n")}\n\n`;
         }
 
-        // Code blocks
         case "pre": {
           const codeEl = node.querySelector("code");
+          // Use raw textContent for code blocks (no markdown escaping)
           const codeText = (codeEl || node).textContent.trim();
-          // Try to detect language from class
           let lang = "";
           if (codeEl) {
             const cls = codeEl.className || "";
@@ -278,25 +266,24 @@
           return `\n\n\`\`\`${lang}\n${codeText}\n\`\`\`\n\n`;
         }
 
-        // Tables
         case "table": {
           return `\n\n${convertTable(node)}\n\n`;
         }
 
-        // Definition lists
         case "dl": return `\n\n${children}\n\n`;
         case "dt": return `\n**${children.trim()}**\n`;
         case "dd": return `: ${children.trim()}\n`;
 
-        // Details / summary
         case "details": return `\n\n${children}\n\n`;
         case "summary": return `**${children.trim()}**\n\n`;
 
-        // Divs / sections – just pass through
         case "div":
         case "section":
         case "article":
         case "main":
+        case "header":
+        case "footer":
+        case "aside":
         case "span":
         case "time":
         case "small":
@@ -305,7 +292,6 @@
         case "abbr":
           return children;
 
-        // Anything else – just return children
         default:
           return children;
       }
@@ -323,16 +309,12 @@
 
       if (rows.length === 0) return "";
 
-      // Determine column count
       const colCount = Math.max(...rows.map((r) => r.length));
-
-      // Pad rows
       const padded = rows.map((r) => {
         while (r.length < colCount) r.push("");
         return r;
       });
 
-      // Build markdown table
       const lines = [];
       lines.push(`| ${padded[0].join(" | ")} |`);
       lines.push(`| ${padded[0].map(() => "---").join(" | ")} |`);
@@ -344,35 +326,26 @@
 
     const rawMd = processNode(element);
 
-    // Clean up excessive whitespace
     let md = rawMd
-      .replace(/\n{3,}/g, "\n\n")  // collapse 3+ newlines
-      .replace(/^\s+/, "")          // trim leading space
-      .replace(/\s+$/, "")          // trim trailing space
-      .replace(/ +/g, " ");         // collapse multiple spaces
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/^\s+/, "")
+      .replace(/\s+$/, "")
+      .replace(/ +/g, " ");
 
     return { markdown: md, images };
   }
 
   // -------------------------------------------------------------------------
-  // Main extraction entry point – called by background script via message
+  // Main extraction entry point
   // -------------------------------------------------------------------------
   function extractPage(options = {}) {
     const includeImages = options.includeImages !== false;
 
-    // Clone the document so we don't mutate the live page
     const clone = document.cloneNode(true);
-
-    // Strip ads and junk
     stripAdsAndJunk(clone);
-
-    // Find main content
     const mainContent = findMainContent(clone);
-
-    // Convert to markdown
     const { markdown, images } = htmlToMarkdown(mainContent, { includeImages });
 
-    // Build front-matter
     const title = document.title || "Untitled";
     const url = document.location.href;
     const date = new Date().toISOString().split("T")[0];
@@ -395,7 +368,7 @@
       } catch (err) {
         sendResponse({ success: false, error: err.message });
       }
-      return true; // keep channel open for async response
+      return true;
     }
   });
 })();

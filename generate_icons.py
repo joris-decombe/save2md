@@ -1,9 +1,9 @@
-"""Generate Save2MD extension icons at 16, 48, and 128px."""
+"""Generate Save2MD extension icons at 16, 32, 48, and 128px."""
 
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-SIZES = [16, 48, 128]
+SIZES = [16, 32, 48, 128]
 OUT_DIR = os.path.join(os.path.dirname(__file__), "icons")
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -31,7 +31,7 @@ for size in SIZES:
     )
 
     # Draw "MD" text or lines depending on size
-    if size >= 48:
+    if size >= 32:
         # Draw "MD" text
         font_size = size // 3
         try:

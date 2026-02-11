@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Save2MD</title>
   <style>
     * {
       box-sizing: border-box;
@@ -30,7 +31,7 @@
     }
     .subtitle {
       font-size: 12px;
-      color: #666;
+      color: #555;
       margin-bottom: 16px;
     }
     .section {
@@ -41,7 +42,7 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #888;
+      color: #666;
       margin-bottom: 8px;
     }
     .option-row {
@@ -58,7 +59,7 @@
     }
     .option-desc {
       font-size: 11px;
-      color: #888;
+      color: #555;
       margin-top: 2px;
     }
     /* Toggle switch */
@@ -72,11 +73,16 @@
       opacity: 0;
       width: 0;
       height: 0;
+      position: absolute;
+    }
+    .toggle input:focus-visible + .slider {
+      outline: 2px solid #4a90d9;
+      outline-offset: 2px;
     }
     .toggle .slider {
       position: absolute;
       inset: 0;
-      background: #ccc;
+      background: #999;
       border-radius: 22px;
       cursor: pointer;
       transition: background 0.2s;
@@ -100,10 +106,14 @@
     }
     select {
       padding: 4px 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 12px;
       background: #fafafa;
+    }
+    select:focus-visible {
+      outline: 2px solid #4a90d9;
+      outline-offset: 1px;
     }
     .btn {
       width: 100%;
@@ -115,20 +125,28 @@
       cursor: pointer;
       transition: background 0.15s;
     }
+    .btn:focus-visible {
+      outline: 2px solid #4a90d9;
+      outline-offset: 2px;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     .btn-primary {
       background: #4a90d9;
       color: #fff;
     }
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       background: #3a7bc8;
     }
     .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
+      background: #e8e8e8;
+      color: #1a1a1a;
       margin-top: 8px;
     }
-    .btn-secondary:hover {
-      background: #e0e0e0;
+    .btn-secondary:hover:not(:disabled) {
+      background: #d8d8d8;
     }
     .status {
       text-align: center;
@@ -136,6 +154,9 @@
       color: #4a90d9;
       margin-top: 8px;
       min-height: 16px;
+    }
+    .status.error {
+      color: #d9534f;
     }
   </style>
 </head>
@@ -150,17 +171,17 @@
     <div class="section-label">Options</div>
     <div class="option-row">
       <div>
-        <div class="option-label">Include images</div>
+        <label class="option-label" for="includeImages">Include images</label>
         <div class="option-desc">Add image references to the output</div>
       </div>
-      <label class="toggle">
-        <input type="checkbox" id="includeImages">
+      <label class="toggle" aria-label="Include images">
+        <input type="checkbox" id="includeImages" role="switch">
         <span class="slider"></span>
       </label>
     </div>
     <div class="option-row" id="imageModeRow" style="display:none;">
       <div>
-        <div class="option-label">Image mode</div>
+        <label class="option-label" for="imageMode">Image mode</label>
         <div class="option-desc">How images are stored</div>
       </div>
       <select id="imageMode">
@@ -172,7 +193,7 @@
 
   <button class="btn btn-primary" id="saveBtn">Save as Markdown</button>
   <button class="btn btn-secondary" id="saveImagesBtn">Save with Images</button>
-  <div class="status" id="status"></div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
 
   <script src="popup.js"></script>
 </body>

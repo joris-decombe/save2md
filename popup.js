@@ -47,21 +47,32 @@ saveImagesBtn.addEventListener("click", () => {
 });
 
 function doSave(options) {
-  statusEl.textContent = "Extracting page...";
+  setStatus("Extracting page...", false);
   saveBtn.disabled = true;
   saveImagesBtn.disabled = true;
 
   chrome.runtime.sendMessage(
     { action: "save-from-popup", options },
     (response) => {
+      if (chrome.runtime.lastError) {
+        setStatus("Error: could not reach page", true);
+        saveBtn.disabled = false;
+        saveImagesBtn.disabled = false;
+        return;
+      }
       if (response?.success) {
-        statusEl.textContent = "Download started!";
+        setStatus("Download started!", false);
         setTimeout(() => window.close(), 1200);
       } else {
-        statusEl.textContent = "Error: " + (response?.error || "unknown");
+        setStatus("Error: " + (response?.error || "unknown"), true);
         saveBtn.disabled = false;
         saveImagesBtn.disabled = false;
       }
     }
   );
+}
+
+function setStatus(message, isError) {
+  statusEl.textContent = message;
+  statusEl.classList.toggle("error", isError);
 }
