@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Save2MD Marquee Tile — 1400x560</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1400px; height: 560px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+  .tile {
+    width: 1400px;
+    height: 560px;
+    background: linear-gradient(135deg, #1a2a4a 0%, #2c5282 40%, #4a90d9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle background pattern */
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 10% 80%, rgba(255,255,255,0.05) 0%, transparent 40%),
+      radial-gradient(circle at 90% 20%, rgba(255,255,255,0.08) 0%, transparent 35%),
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 50%);
+  }
+
+  /* Floating markdown symbols in background */
+  .bg-symbol {
+    position: absolute;
+    color: rgba(255,255,255,0.05);
+    font-family: "SF Mono", Consolas, monospace;
+    font-weight: 700;
+    pointer-events: none;
+  }
+  .bg-s1 { font-size: 72px; top: 30px; left: 40px; transform: rotate(-15deg); }
+  .bg-s2 { font-size: 56px; top: 50px; right: 60px; transform: rotate(10deg); }
+  .bg-s3 { font-size: 40px; bottom: 60px; left: 120px; transform: rotate(-5deg); }
+  .bg-s4 { font-size: 64px; bottom: 30px; right: 100px; transform: rotate(8deg); }
+  .bg-s5 { font-size: 48px; top: 180px; left: 300px; transform: rotate(-8deg); }
+  .bg-s6 { font-size: 52px; bottom: 150px; right: 350px; transform: rotate(12deg); }
+
+  /* Left side: branding */
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+  }
+
+  .icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .icon-inner {
+    width: 46px;
+    height: 46px;
+    border: 3.5px solid #fff;
+    border-radius: 8px;
+    position: relative;
+  }
+  .icon-inner::after {
+    content: "MD";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  .title {
+    font-size: 56px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+
+  .tagline {
+    font-size: 22px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.4;
+    max-width: 480px;
+    margin-bottom: 28px;
+  }
+
+  .features {
+    display: flex;
+    gap: 20px;
+  }
+  .feature-chip {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* Right side: mockup */
+  .mockup {
+    position: relative;
+    z-index: 1;
+  }
+
+  .mock-window {
+    width: 480px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .mock-titlebar {
+    height: 32px;
+    background: #e8e8e8;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .mock-dot.r { background: #ff5f57; }
+  .mock-dot.y { background: #febc2e; }
+  .mock-dot.g { background: #28c840; }
+  .mock-body {
+    padding: 20px 24px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #333;
+  }
+  .mock-body .md-h1 { color: #4a90d9; font-weight: 700; font-size: 15px; }
+  .mock-body .md-meta { color: #888; font-size: 11px; }
+  .mock-body .md-rule { color: #ccc; }
+  .mock-body .md-heading { color: #1a1a1a; font-weight: 700; margin-top: 8px; }
+  .mock-body .md-code { background: #f4f4f4; padding: 1px 4px; border-radius: 2px; font-size: 12px; }
+  .mock-body .md-bold { font-weight: 700; }
+  .mock-body .md-link { color: #4a90d9; }
+
+  /* Arrow between html and md */
+  .conversion-arrow {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .conv-chip {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .conv-chip.html {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,100,100,0.5);
+  }
+  .conv-arrow-icon { color: rgba(255,255,255,0.5); font-size: 20px; }
+  .conv-chip.md {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="tile">
+  <span class="bg-symbol bg-s1"># </span>
+  <span class="bg-symbol bg-s2">**</span>
+  <span class="bg-symbol bg-s3">- [ ]</span>
+  <span class="bg-symbol bg-s4">```</span>
+  <span class="bg-symbol bg-s5">> </span>
+  <span class="bg-symbol bg-s6">---</span>
+
+  <div class="brand">
+    <div class="icon"><div class="icon-inner"></div></div>
+    <div class="title">Save2MD</div>
+    <div class="tagline">Save any web page as clean, readable Markdown with one click</div>
+    <div class="features">
+      <span class="feature-chip">Ad removal</span>
+      <span class="feature-chip">Smart extraction</span>
+      <span class="feature-chip">100% local</span>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="conversion-arrow">
+      <span class="conv-chip html">&lt;html&gt;</span>
+      <span class="conv-arrow-icon">&rarr;</span>
+      <span class="conv-chip md">.md</span>
+    </div>
+    <div class="mock-window">
+      <div class="mock-titlebar">
+        <div class="mock-dot r"></div>
+        <div class="mock-dot y"></div>
+        <div class="mock-dot g"></div>
+      </div>
+      <div class="mock-body">
+        <div class="md-h1"># Getting Started with Web APIs</div>
+        <div class="md-meta">&gt; Source: https://devblog.example.com/...</div>
+        <div class="md-meta">&gt; Saved: 2026-02-11</div>
+        <br>
+        <div class="md-rule">---</div>
+        <br>
+        <div>Web APIs are the backbone of modern web development. Whether you're building a <span class="md-link">[single-page app](https://...)</span>...</div>
+        <br>
+        <div class="md-heading">## What is a REST API?</div>
+        <div>REST uses standard HTTP methods like <span class="md-code">`GET`</span>, <span class="md-code">`POST`</span>, <span class="md-code">`PUT`</span>...</div>
+        <br>
+        <div class="md-heading">## Key Concepts</div>
+        <div>- <span class="md-bold">**Endpoints**</span> &mdash; URLs that represent resources</div>
+        <div>- <span class="md-bold">**HTTP Methods**</span> &mdash; define the action</div>
+        <div>- <span class="md-bold">**Status Codes**</span> &mdash; indicate success or failure</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
