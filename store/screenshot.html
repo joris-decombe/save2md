@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Save2MD Screenshot — 1280x800</title>
+<style>
+  /* Open this file in Chrome, resize the viewport to 1280x800, and screenshot.
+     Or use: chrome --headless --screenshot --window-size=1280,800 screenshot.html */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; }
+
+  /* ---- Chrome-like browser frame ---- */
+  .browser { width: 1280px; height: 800px; display: flex; flex-direction: column; background: #fff; }
+  .chrome-bar { height: 72px; background: #dee1e6; display: flex; flex-direction: column; }
+  .tab-strip { display: flex; align-items: flex-end; height: 36px; padding: 0 8px; gap: 2px; }
+  .tab { background: #fff; border-radius: 8px 8px 0 0; padding: 6px 16px; font-size: 12px; color: #333; display: flex; align-items: center; gap: 6px; max-width: 220px; }
+  .tab .favicon { width: 14px; height: 14px; background: #4a90d9; border-radius: 3px; flex-shrink: 0; }
+  .tab .close { font-size: 14px; color: #888; margin-left: auto; }
+  .tab-bg { flex: 1; }
+  .nav-bar { height: 36px; background: #fff; display: flex; align-items: center; padding: 0 12px; gap: 8px; border-bottom: 1px solid #ddd; }
+  .nav-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 16px; }
+  .url-bar { flex: 1; background: #f1f3f4; border-radius: 18px; height: 28px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #333; }
+  .url-bar .lock { color: #555; margin-right: 6px; font-size: 12px; }
+  .ext-icons { display: flex; gap: 4px; align-items: center; }
+  .ext-icon { width: 20px; height: 20px; border-radius: 3px; }
+  .ext-icon.save2md { background: #4a90d9; position: relative; }
+  .ext-icon.save2md::after { content: ""; position: absolute; inset: 4px; border: 2px solid #fff; border-radius: 2px; }
+  .ext-icon.other { background: #ccc; }
+
+  /* ---- Page content ---- */
+  .page { flex: 1; overflow: hidden; position: relative; display: flex; }
+  .page-content { flex: 1; padding: 48px 80px; max-width: 900px; margin: 0 auto; }
+  .page-content h1 { font-size: 32px; line-height: 1.3; margin-bottom: 12px; color: #1a1a1a; }
+  .page-meta { font-size: 13px; color: #888; margin-bottom: 24px; }
+  .page-content p { font-size: 15px; line-height: 1.7; color: #333; margin-bottom: 16px; }
+  .page-content h2 { font-size: 22px; margin: 28px 0 12px; color: #1a1a1a; }
+  .page-content code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 13px; font-family: "SF Mono", Consolas, monospace; }
+  .page-content pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; font-family: "SF Mono", Consolas, monospace; margin-bottom: 16px; overflow: hidden; }
+  .page-content pre .kw { color: #c586c0; }
+  .page-content pre .fn { color: #dcdcaa; }
+  .page-content pre .str { color: #ce9178; }
+  .page-content pre .cm { color: #6a9955; }
+  .page-content ul { margin: 0 0 16px 24px; }
+  .page-content li { font-size: 15px; line-height: 1.7; color: #333; margin-bottom: 4px; }
+
+  /* ---- Sidebar (ad junk) ---- */
+  .sidebar { width: 300px; padding: 24px 16px; border-left: 1px solid #eee; flex-shrink: 0; }
+  .ad-box { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin-bottom: 16px; text-align: center; }
+  .ad-box .ad-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .ad-box .ad-placeholder { background: #e8e8e8; height: 200px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 14px; }
+  /* Red X overlay on ads */
+  .ad-box { position: relative; }
+  .ad-box::after { content: ""; position: absolute; inset: -2px; border: 3px solid #e74c3c; border-radius: 8px; opacity: 0.7; }
+  .ad-strikethrough { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  .ad-strikethrough line { stroke: #e74c3c; stroke-width: 3; opacity: 0.6; }
+
+  /* ---- Extension popup overlay ---- */
+  .popup-overlay { position: absolute; top: 0; right: 60px; z-index: 10; }
+  .popup-frame { width: 300px; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08); padding: 16px; }
+  .popup-frame h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .popup-frame .popup-icon { width: 24px; height: 24px; background: #4a90d9; border-radius: 5px; position: relative; flex-shrink: 0; }
+  .popup-frame .popup-icon::after { content: ""; position: absolute; inset: 5px; border: 2px solid #fff; border-radius: 2px; }
+  .popup-subtitle { font-size: 12px; color: #555; margin-bottom: 16px; }
+  .popup-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #666; margin-bottom: 8px; }
+  .popup-option { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .popup-option-label { font-size: 13px; }
+  .popup-option-desc { font-size: 11px; color: #555; margin-top: 2px; }
+  .toggle-track { width: 40px; height: 22px; background: #999; border-radius: 22px; position: relative; flex-shrink: 0; }
+  .toggle-track.on { background: #4a90d9; }
+  .toggle-thumb { width: 16px; height: 16px; background: #fff; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: transform 0.2s; }
+  .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+  .popup-btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .popup-btn.primary { background: #4a90d9; color: #fff; }
+  .popup-btn.secondary { background: #e8e8e8; color: #1a1a1a; }
+  .popup-status { text-align: center; font-size: 12px; color: #4a90d9; margin-top: 8px; }
+
+  /* ---- Floating download indicator ---- */
+  .download-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 48px; background: #333; display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 20; }
+  .download-bar .dl-icon { color: #4a90d9; font-size: 18px; }
+  .download-bar .dl-name { color: #fff; font-size: 13px; }
+  .download-bar .dl-status { color: #aaa; font-size: 12px; margin-left: auto; }
+
+  /* ---- Markdown preview pane (right overlay to show output) ---- */
+  .md-preview { position: absolute; bottom: 64px; right: 24px; width: 380px; background: #fff; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); z-index: 15; overflow: hidden; }
+  .md-preview-header { background: #f8f8f8; padding: 10px 14px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px; }
+  .md-preview-header .md-icon { font-size: 16px; color: #4a90d9; font-weight: 700; }
+  .md-preview-header .md-filename { font-size: 12px; color: #555; font-family: "SF Mono", Consolas, monospace; }
+  .md-preview-body { padding: 14px; font-family: "SF Mono", Consolas, monospace; font-size: 11.5px; line-height: 1.6; color: #333; max-height: 260px; overflow: hidden; }
+  .md-preview-body .md-h1 { color: #4a90d9; font-weight: 700; }
+  .md-preview-body .md-meta { color: #888; }
+  .md-preview-body .md-heading { color: #1a1a1a; font-weight: 700; }
+  .md-preview-body .md-code { background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  .md-preview-body .md-link { color: #4a90d9; }
+
+  /* ---- Arrow annotation ---- */
+  .arrow-annotation { position: absolute; z-index: 25; }
+</style>
+</head>
+<body>
+
+<div class="browser">
+  <!-- Chrome tab bar -->
+  <div class="chrome-bar">
+    <div class="tab-strip">
+      <div class="tab">
+        <div class="favicon"></div>
+        <span>Getting Started with Web APIs — Dev Blog</span>
+        <span class="close">&times;</span>
+      </div>
+      <div class="tab-bg"></div>
+    </div>
+    <div class="nav-bar">
+      <div class="nav-btn">&larr;</div>
+      <div class="nav-btn">&rarr;</div>
+      <div class="nav-btn">&#x21bb;</div>
+      <div class="url-bar">
+        <span class="lock">&#x1f512;</span>
+        devblog.example.com/getting-started-with-web-apis
+      </div>
+      <div class="ext-icons">
+        <div class="ext-icon other"></div>
+        <div class="ext-icon other"></div>
+        <div class="ext-icon save2md"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page">
+    <!-- Main article -->
+    <div class="page-content">
+      <h1>Getting Started with Web APIs: A Practical Guide</h1>
+      <div class="page-meta">Published on January 15, 2026 &bull; 8 min read &bull; by Sarah Chen</div>
+
+      <p>Web APIs are the backbone of modern web development. Whether you're building a single-page application, a mobile app, or integrating third-party services, understanding how APIs work is essential.</p>
+
+      <h2>What is a REST API?</h2>
+      <p>REST (Representational State Transfer) is an architectural style that uses standard HTTP methods like <code>GET</code>, <code>POST</code>, <code>PUT</code>, and <code>DELETE</code> to interact with resources.</p>
+
+      <pre><span class="cm">// Fetch data from an API</span>
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.example.com/users'</span>);
+<span class="kw">const</span> users = <span class="kw">await</span> response.<span class="fn">json</span>();
+console.<span class="fn">log</span>(users);</pre>
+
+      <h2>Key Concepts</h2>
+      <ul>
+        <li><strong>Endpoints</strong> — URLs that represent resources</li>
+        <li><strong>HTTP Methods</strong> — define the action (GET, POST, etc.)</li>
+        <li><strong>Status Codes</strong> — indicate success or failure</li>
+        <li><strong>Headers</strong> — carry metadata about requests</li>
+      </ul>
+
+      <p>Authentication is another critical piece. Most APIs use either API keys, OAuth tokens, or JWTs to verify identity and permissions...</p>
+    </div>
+
+    <!-- Sidebar with ads (shown as stripped) -->
+    <div class="sidebar">
+      <div class="ad-box">
+        <div class="ad-label">Advertisement</div>
+        <div class="ad-placeholder">AD BANNER</div>
+        <svg class="ad-strikethrough" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <line x1="0" y1="0" x2="100" y2="100"/>
+          <line x1="100" y1="0" x2="0" y2="100"/>
+        </svg>
+      </div>
+      <div class="ad-box">
+        <div class="ad-label">Sponsored</div>
+        <div class="ad-placeholder" style="height:120px">SPONSORED CONTENT</div>
+        <svg class="ad-strikethrough" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <line x1="0" y1="0" x2="100" y2="100"/>
+          <line x1="100" y1="0" x2="0" y2="100"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Extension popup -->
+    <div class="popup-overlay">
+      <div class="popup-frame">
+        <h2><div class="popup-icon"></div> Save2MD</h2>
+        <div class="popup-subtitle">Save this page as clean Markdown</div>
+
+        <div class="popup-section-label">Options</div>
+        <div class="popup-option">
+          <div>
+            <div class="popup-option-label">Include images</div>
+            <div class="popup-option-desc">Add image references to the output</div>
+          </div>
+          <div class="toggle-track">
+            <div class="toggle-thumb"></div>
+          </div>
+        </div>
+
+        <button class="popup-btn primary">Save as Markdown</button>
+        <button class="popup-btn secondary">Save with Images</button>
+        <div class="popup-status">Download started!</div>
+      </div>
+    </div>
+
+    <!-- Markdown output preview -->
+    <div class="md-preview">
+      <div class="md-preview-header">
+        <span class="md-icon">MD</span>
+        <span class="md-filename">Getting-Started-with-Web-APIs-A-Practical-Guide.md</span>
+      </div>
+      <div class="md-preview-body">
+        <div class="md-h1"># Getting Started with Web APIs: A Practical Guide</div>
+        <br>
+        <div class="md-meta">&gt; Source: https://devblog.example.com/getting-started...</div>
+        <div class="md-meta">&gt; Saved: 2026-02-11</div>
+        <br>
+        <div>---</div>
+        <br>
+        <div>Web APIs are the backbone of modern web development.
+Whether you're building a single-page application...</div>
+        <br>
+        <div class="md-heading">## What is a REST API?</div>
+        <br>
+        <div>REST (Representational State Transfer) is an
+architectural style that uses standard HTTP methods
+like <span class="md-code">`GET`</span>, <span class="md-code">`POST`</span>, <span class="md-code">`PUT`</span>, and <span class="md-code">`DELETE`</span>...</div>
+        <br>
+        <div>```js</div>
+        <div>const response = await fetch('https://api...');</div>
+        <div>const users = await response.json();</div>
+        <div>```</div>
+        <br>
+        <div class="md-heading">## Key Concepts</div>
+        <div>- **Endpoints** — URLs that represent resources</div>
+        <div>- **HTTP Methods** — define the action...</div>
+      </div>
+    </div>
+
+    <!-- Download bar -->
+    <div class="download-bar">
+      <span class="dl-icon">&#x2B07;</span>
+      <span class="dl-name">Getting-Started-with-Web-APIs-A-Practical-Guide.md</span>
+      <span class="dl-status">Completed</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
