@@ -1,0 +1,104 @@
+name: Deploy Privacy Policy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: [privacy-policy.md]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build HTML from Markdown
+        run: |
+          mkdir -p _site
+          cat > _site/index.html << 'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Save2MD Privacy Policy</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; line-height: 1.6; }
+              h1 { border-bottom: 2px solid #4a90d9; padding-bottom: 8px; }
+              h2 { margin-top: 32px; color: #2c5282; }
+              a { color: #4a90d9; }
+              code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+              ul, ol { padding-left: 24px; }
+              li { margin-bottom: 4px; }
+              strong { color: #1a1a1a; }
+            </style>
+          </head>
+          <body>
+          HTMLEOF
+          # Convert markdown to basic HTML
+          python3 -c "
+          import re, html as h
+          with open('privacy-policy.md') as f:
+              md = f.read()
+          # Convert markdown to HTML (basic)
+          lines = md.split('\n')
+          out = []
+          in_list = False
+          for line in lines:
+              stripped = line.strip()
+              if stripped.startswith('# '):
+                  if in_list: out.append('</ul>'); in_list = False
+                  out.append(f'<h1>{stripped[2:]}</h1>')
+              elif stripped.startswith('## '):
+                  if in_list: out.append('</ul>'); in_list = False
+                  out.append(f'<h2>{stripped[3:]}</h2>')
+              elif stripped.startswith('- '):
+                  if not in_list: out.append('<ul>'); in_list = True
+                  content = stripped[2:]
+                  content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+                  content = re.sub(r'--', '&mdash;', content)
+                  content = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href=\"\2\">\1</a>', content)
+                  content = re.sub(r'\x60(.+?)\x60', r'<code>\1</code>', content)
+                  out.append(f'<li>{content}</li>')
+              elif stripped.startswith(('1.', '2.', '3.', '4.')):
+                  if not in_list: out.append('<ol>'); in_list = 'ol'
+                  content = re.sub(r'^\d+\.\s*', '', stripped)
+                  content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+                  content = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href=\"\2\">\1</a>', content)
+                  content = re.sub(r'\x60(.+?)\x60', r'<code>\1</code>', content)
+                  out.append(f'<li>{content}</li>')
+              elif stripped == '':
+                  if in_list == 'ol': out.append('</ol>'); in_list = False
+                  elif in_list: out.append('</ul>'); in_list = False
+              else:
+                  content = stripped
+                  content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+                  content = re.sub(r'--', '&mdash;', content)
+                  content = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href=\"\2\">\1</a>', content)
+                  content = re.sub(r'\x60(.+?)\x60', r'<code>\1</code>', content)
+                  out.append(f'<p>{content}</p>')
+          if in_list == 'ol': out.append('</ol>')
+          elif in_list: out.append('</ul>')
+          print('\n'.join(out))
+          " >> _site/index.html
+          echo '</body></html>' >> _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
